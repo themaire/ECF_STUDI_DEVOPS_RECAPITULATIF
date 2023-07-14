@@ -1,3 +1,4 @@
+(Pour prouver mon travail de recherche, j'ai joins mes notes personnelles élaborées lors de cet ECF.)
 ### STUDI _ ECF FINAL _ Récapitulatif
 
 Ce referentiel GitHub recence plusieurs autre réferientiels necessaires au diverses réponses à l'ECF final du Bachelor DevOps de l'école en ligne STUDI.FR .

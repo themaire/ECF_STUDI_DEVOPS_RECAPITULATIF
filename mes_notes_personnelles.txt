@@ -1,0 +1,169 @@
+####
+###### CLUSTER
+####
+
+# Add kubectl config. Need to cd into terraform cluster folder!!!
+aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
+# or
+aws eks --region us-west-2 update-kubeconfig --name $(terraform output -raw cluster_name)
+# or (si on connait deja le nom de la région et du cluster)
+aws eks update-kubeconfig --region us-west-2 --name ecf-eks-cluster
+
+----------
+# List des secrets
+kubectl get secrets
+
+# Décrire les propriétés d'un secret
+kubectl describe secrets/postgres-creds
+
+# Décrire le détail du secret
+kubectl get secret postgres-creds -o jsonpath='{.data}'
+
+# Supprimer un secret
+kubectl delete secret postgres-creds
+
+
+
+
+
+
+
+
+----------
+
+# Appliquer un déploiment
+kubectl apply -f deployment.yaml
+# or
+kubectl delete -f deployment.yaml
+
+kubectl get deployments
+kubectl describe pod
+
+----------
+# Tester sa configuration kubeconfig de kubectl
+kubectl get svc
+
+----------
+# Appliquer un sercice (comme un déploiement)
+kubectl apply -f eks-service.yaml
+# or
+kubectl delete -f eks-service.yaml
+# or tout créer (déploiement + service)
+kubectl apply -f deployment.yaml && kubectl apply -f eks-service.yaml
+# or tout supprimer
+kubectl delete -f eks-service.yaml && kubectl delete -f deployment.yaml
+
+----------
+## Description d'un service
+kubectl -n flask describe service eks-flask-linux-service
+
+----------
+INFOS
+
+# Créer un namespace au nom de l'application
+kubectl create namespace toto
+# or
+kubectl delete namespace toto
+
+kubectl create namespace appli-business
+
+### Dans un namespace -> bancash
+kubectl create namespace bancash
+
+# Description du contenu du namespace bancash
+kubectl get all -n flbancashask
+
+## Description d'un service
+kubectl -n bancash describe service eks-bancash-linux-service
+
+# Liste des pods
+kubectl get -n bancash pod
+
+# Description d'un pod
+kubectl -n bancash describe pod/bancash-85cd7995cb-k7bwf
+
+
+----
+------ Déploieemnt dans Terraform
+----
+(Tutoriel : https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-provider)
+
+# Voir le context de notre cluster
+tail .kube/config -n 1
+
+# Voir les informations de notre cluster (grace au context)
+kubectl config view --minify --flatten --context=arn:aws:eks:us-west-2:071170175291:cluster/ecf-eks-cluster
+
+
+####
+###### DOCKER
+####
+
+# Build image
+docker build -t studi_ecf-nestjs:test -f dockerfile .
+# or
+docker build . --no-cache --rm --compress -t studi_ecf-nestjs:test -f ../dockerfile
+docker build . -t studi_ecf-nestjs:test -f ./dockerfile 
+# or with test (multistage test section ONLY)
+docker build -t studi_ecf-nestjs:test -f ./dockerfile --target test .
+docker build -t studi_ecf-nestjs:base -f ./dockerfile --target production .
+
+buildTest='docker build -t studi_ecf-nestjs:base -f ./dockerfile --target base .'
+buildProd='docker build -t studi_ecf-nestjs:test -f ./dockerfile --target test .'
+
+# trouver l'id de l'image
+for i in {1..100};do docker images | grep nestjs | cut -d ' ' -f $i && echo $i; done
+docker images | grep nestjs | cut -d ' ' -f 61
+# dans une fonction
+showidimage() { docker images | grep nestjs | cut -d ' ' -f 61; }
+
+
+# Run ECF NestJS container :
+docker run -p 3000:3000 -d --name nestJS 071170175291.dkr.ecr.us-west-2.amazonaws.com/studi/ecf_bancask_back:latest
+
+# Run la base
+docker run -d --name nestJS studi_ecf-nestjs:base
+docker run -d -p 3000:3000 --name nestJS studi_ecf-nestjs:prod
+
+# Exec
+@param -i --interractive Keep STDIN open even not attached
+@param -t--tty Allocate a pseudo-TTY
+@param -u --user Username or UUID (format: "<name|uid>[:<group|gid>]") 
+@param -w --workdir Working directory inside the container
+@param CONTAINER ID
+@param CONTAINER COMMAND to execute
+docker exec -it -w /usr/src/app f06713962ffb /bin/sh
+
+# Exec la base
+docker exec -it -w /usr/src/app nestJS /bin/sh
+# Exec la prod
+docker exec -it -w /usr/src/app nestJS /bin/sh
+
+####
+###### Terraform usual commands
+####
+
+terraform init
+# or
+terraform init -upgrade
+-------
+terraform plan
+# or
+terraform plan -reshesh-only
+-------
+terraform apply
+# or
+terraform apply -auto-approve
+-------
+terraform destroy
+
+
+####
+###### AWS Elastic Container Registry
+####
+
+aws ecr describe-images --repository-name studi/ecf_bancask_back --region=us-west-2
+aws ecr list-images --repository-name studi/ecf_fronecf_bancask_back --region=us-west-2
+
+
+071170175291.dkr.ecr.us-west-2.amazonaws.com/studi/ecf_bancask_back
